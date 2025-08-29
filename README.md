@@ -30,7 +30,7 @@ python IRCAS.py transcripts.fa plant --threads n
 IRCAS employs a multi-stage training approach with three specialized components:
 
 #### Stage 1: SUPPA validation dataset preparation
-- **Data**: annotation file
+- **Data**: annotation file \
 (suppa.py generateEvents \
     -i Araport11_GFF3_genes_transposons.201606.gtf \
     -o araport11_events \
