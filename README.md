@@ -34,7 +34,7 @@ IRCAS employs a multi-stage training approach with three specialized components:
 (suppa.py generateEvents \
     -i Araport11_GFF3_genes_transposons.201606.gtf \
     -o araport11_events \
-    -f ioi
+    -f ioi)
 - **Positiontranfer**: Transfer position from genome to transcript(suppapositiontransfer.py)
 - **Seqeuncetranfer**: Transfer sequence to acceptable format(suppaseqeuncetransfer.py)
 
