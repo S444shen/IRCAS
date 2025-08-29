@@ -30,20 +30,24 @@ python IRCAS.py transcripts.fa plant --threads n
 IRCAS employs a multi-stage training approach with three specialized components:
 
 #### Stage 1: SUPPA validation dataset preparation
-- **Data**: Validated splice site sequences with flanking regions (±50 bp)
-- **Architecture**: Attention-based CNN with positional encoding
-- **Loss Function**: Binary cross-entropy with focal loss for imbalanced data
-- **Training Strategy**: Progressive learning with curriculum scheduling
+- **Data**: annotation file
+(suppa.py generateEvents \
+    -i Araport11_GFF3_genes_transposons.201606.gtf \
+    -o araport11_events \
+    -f ioi
+- **Positiontranfer**: Transfer position from genome to transcript(suppapositiontransfer.py)
+- **Seqeuncetranfer**: Transfer sequence to acceptable format(suppaseqeuncetransfer.py)
 
-#### Stage 2: Splice Site Rectification Training
+#### Stage 2: Splice Site Rectification Training(trainRectifacation.py)
 - **Data**: Validated splice site sequences with flanking regions (±50 bp)
-- **Method**: Self-supervised learning on cDBG topology patterns
-- **Objective**: Learn AS-indicative graph structural features
-- **Validation**: Cross-validation on diverse species datasets
+- **Architecture**: Attention-based CNN model 
+- **Loss Function**: Huber Loss Function
+- **Regularization**: Dropout, batch normalization, and early stopping
 
-#### Stage 3: AS Classification Training
-- **Data**: Annotated AS events across seven canonical types
-- **Architecture**: Hybrid GNN combining GraphSAGE and GAT layers
+#### Stage 3: AS Classification Training (trainClassification.py)
+- **Data**: Validated splice site sequences with flanking regions (±50 bp)
+- **Feature and pygdata**: from sequence to cDBG(node,edge,global features) (dataprecessing_lite.py,feature.py)
+- **Architecture**: Hybrid GNN combining transformer and GAT layers 
 - **Loss Function**: Hybrid Loss Function
 - **Regularization**: Dropout, batch normalization, and early stopping
 
@@ -52,8 +56,8 @@ all data and model available in xxx
 ### Training Datasets Source:
 - **GENCODE Human Transcriptome**: 200,000+ validated transcript pairs
 - **GENCODE Mouse Transcriptome**: Annotations from 50+ vertebrate species
-- **TAIR Arabidopsis**: Plant-specific alternative splicing events
-- **FlyBase Drosophila**: Invertebrate AS patterns and validation
+- **Arabidopsis Transcriptome**: Plant-specific alternative splicing events
+- **Rice Transcriptome**: Invertebrate AS patterns and validation
 
 ### Data Preprocessing
 - **Augmentation**: Synthetic negative examples and balanced sampling
