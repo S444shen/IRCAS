@@ -9,7 +9,7 @@ IRCAS can be applied to a wide range of research scenarios and species:
 
 ### Environment 
 - conda install environment.yml
-- download relevent modelweight from xxx
+- download relevent model weight from xxx
 ### Supported Input Data
 - Raw RNA-seq transcript assemblies (FASTA format)
 
@@ -52,7 +52,7 @@ IRCAS employs a multi-stage training approach with three specialized components:
 - **Regularization**: Dropout, batch normalization, and early stopping
 
 ## Data Source
-all data and model available in xxx
+All data and model available in 
 ### Training Datasets Source:
 - **GENCODE Human Transcriptome**: 200,000+ validated transcript pairs
 - **GENCODE Mouse Transcriptome**: Annotations from 50+ vertebrate species
