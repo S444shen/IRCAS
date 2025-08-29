@@ -1,41 +1,42 @@
+
+<img width="1263" height="1048" alt="workflow" src="https://github.com/user-attachments/assets/10a0845c-f35f-4663-9bcf-54deb37a3dfb" />
+
 Unlike previous methods that separate AS prediction and classification, IRCAS achieves higher end-to-end accuracy by addressing splice site localization errors (reducing average error from 2.1 bp to near zero) and improving classification robustness. This makes IRCAS a powerful tool for studying AS across diverse species without relying on reference genomes.
 
 ## Model Application
 
 IRCAS can be applied to a wide range of research scenarios and species:
 
-### Research Applications
-- **Comparative Genomics**: Study alternative splicing patterns across different species without requiring reference genomes
-- **Evolutionary Biology**: Investigate the evolution of splicing mechanisms and isoform diversity
-- **Non-Model Organisms**: Analyze alternative splicing in understudied species where genomic resources are limited
-- **Disease Research**: Identify aberrant splicing patterns in clinical samples from any organism
-- **Agricultural Genomics**: Study crop species and their wild relatives for breeding programs
-
+### Environment 
+- conda install environment.yml
+- download relevent modelweight from xxx
 ### Supported Input Data
 - Raw RNA-seq transcript assemblies (FASTA format)
-- De novo transcriptome assemblies
-- Pooled transcript sequences from multiple samples
-- Single-cell RNA-seq derived transcripts
 
 ### Output Formats
-- Detailed AS event annotations with confidence scores
-- Splice site coordinates with sub-nucleotide precision
-- Classification results for all seven canonical AS types
-- Visualization-ready reports for downstream analysis
+- Accurate transcript pairs
+- Splice site coordinates with high precision
+- AS event Type with confidence scores
+
+### Usage
+#### For plant 
+python IRCAS.py transcripts.fa plant --threads n
+#### For animal 
+python IRCAS.py transcripts.fa plant --threads n
 
 ## Model Training
 
 ### Training Architecture
 IRCAS employs a multi-stage training approach with three specialized components:
 
-#### Stage 1: Splice Site Detection Training
+#### Stage 1: SUPPA validation dataset preparation
 - **Data**: Validated splice site sequences with flanking regions (±50 bp)
 - **Architecture**: Attention-based CNN with positional encoding
 - **Loss Function**: Binary cross-entropy with focal loss for imbalanced data
 - **Training Strategy**: Progressive learning with curriculum scheduling
 
-#### Stage 2: Graph Construction Training
-- **Data**: Transcript pairs with known AS relationships
+#### Stage 2: Splice Site Rectification Training
+- **Data**: Validated splice site sequences with flanking regions (±50 bp)
 - **Method**: Self-supervised learning on cDBG topology patterns
 - **Objective**: Learn AS-indicative graph structural features
 - **Validation**: Cross-validation on diverse species datasets
@@ -43,49 +44,19 @@ IRCAS employs a multi-stage training approach with three specialized components:
 #### Stage 3: AS Classification Training
 - **Data**: Annotated AS events across seven canonical types
 - **Architecture**: Hybrid GNN combining GraphSAGE and GAT layers
-- **Loss Function**: Multi-class cross-entropy with class balancing
+- **Loss Function**: Hybrid Loss Function
 - **Regularization**: Dropout, batch normalization, and early stopping
 
-### Training Parameters
-- **Batch Size**: 64 for CNN components, 32 for GNN components
-- **Learning Rate**: Adaptive scheduling starting at 1e-4
-- **Epochs**: 100 with early stopping (patience=10)
-- **Hardware**: GPU-accelerated training (CUDA 11.0+)
-- **Training Time**: ~48 hours on NVIDIA V100
-
-### Model Validation
-- **Cross-Species Validation**: Tested on 15+ species across kingdoms
-- **Benchmarking**: Compared against SUPPA2, rMATS, and other state-of-the-art tools
-- **Metrics**: Precision, recall, F1-score, and splice site accuracy
-
 ## Data Source
-
-### Training Datasets
-
-#### Primary Training Data
+all data and model available in xxx
+### Training Datasets Source:
 - **GENCODE Human Transcriptome**: 200,000+ validated transcript pairs
-- **Ensembl Multi-Species**: Annotations from 50+ vertebrate species
+- **GENCODE Mouse Transcriptome**: Annotations from 50+ vertebrate species
 - **TAIR Arabidopsis**: Plant-specific alternative splicing events
 - **FlyBase Drosophila**: Invertebrate AS patterns and validation
 
-#### Validation Datasets
-- **Species Coverage**: Mammals, birds, fish, plants, fungi, and invertebrates
-- **Tissue Diversity**: Brain, liver, heart, leaf, root, and reproductive tissues
-- **Developmental Stages**: Embryonic, juvenile, and adult samples
-- **Sample Size**: 500,000+ manually curated AS events
-
-### Benchmark Datasets
-- **Simulation Data**: Artificially generated AS events with known ground truth
-- **Experimental Validation**: RT-PCR validated AS events from literature
-- **Public Repositories**: Data from SRA, GEO, and species-specific databases
-
 ### Data Preprocessing
-- **Quality Control**: Transcript length filtering (>200 bp), redundancy removal
-- **Standardization**: Sequence normalization and format conversion
 - **Augmentation**: Synthetic negative examples and balanced sampling
 - **Split Strategy**: 70% training, 15% validation, 15% testing
 
-### Continuous Updates
-- **Monthly Releases**: Updated models with new species data
-- **Community Contributions**: User-submitted datasets for model improvement
-- **Feedback Integration**: Performance metrics from real-world applications
+
