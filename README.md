@@ -52,7 +52,7 @@ IRCAS employs a multi-stage training approach with three specialized components:
 - **Regularization**: Dropout, batch normalization, and early stopping
 
 ## Data Source
-All data and model available in [website](https://xxxx.com/IRCAS/index.php/download)
+All data and model available in [website](http://zhangqblab.cn)
 ### Training Datasets Source:
 - **GENCODE Human Transcriptome**: 200,000+ validated transcript pairs
 - **GENCODE Mouse Transcriptome**: 100,000+ validated transcript pairs
