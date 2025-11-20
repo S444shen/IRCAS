@@ -9,7 +9,7 @@ IRCAS can be applied to a wide range of research scenarios and species:
 
 ### Environment 
 - conda install environment.yml
-- download relevent model weight from [website](https://xxxx.com/IRCAS/index.php/download)
+- download relevent model weight from [website](http://zhangqblab.cn)
 ### Supported Input Data
 - Raw RNA-seq transcript assemblies (FASTA format)
 
