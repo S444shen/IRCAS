@@ -22,7 +22,7 @@ IRCAS can be applied to a wide range of research scenarios and species:
 #### For plant 
 python IRCAS.py transcripts.fa plant --threads n
 #### For animal 
-python IRCAS.py transcripts.fa plant --threads n
+python IRCAS.py transcripts.fa animal --threads n
 
 ## Model Training
 
