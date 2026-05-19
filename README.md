@@ -61,6 +61,6 @@ All data and model available in [website](http://zhangqblab.cn)
 
 ### Data Preprocessing
 - **Augmentation**: Synthetic negative examples and balanced sampling
-- **Split Strategy**: 70% training, 15% validation, 15% testing
+- **Split Strategy**: 5-fold cross-validation with gene-disjoint grouping. The dataset is partitioned into 5 folds using sklearn.model_selection.GroupKFold keyed on gene IDs parsed from the GTF annotation, ensuring that no gene appears in both training and evaluation folds within any single fold split. Within each fold, training is repeated with three distinct random seeds (15 independent runs in total per species). For each fold, the training portion is further split internally into a training subset and a validation subset for early-stopping monitoring; the held-out fold serves as the test set. Performance metrics are reported as mean ± standard deviation across the 15 runs.
 
 
