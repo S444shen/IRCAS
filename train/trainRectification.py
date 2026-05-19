@@ -3,7 +3,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -396,33 +395,54 @@ def predict_new_sequences(newup, newaa, newdown, model, scaler, max_newaa_len=40
     print(f"Predicted Splice Site Offset (end): {pred_y[1]:.2f}")
 
 # 主函数
-def main(file_path="humancomparison.tsv"):
-    # 加载数据
-    df = load_data(file_path)
-    
-    # 检查数据是否成功加载
-    if df is None:
-        print("Error: Failed to load data. Please check the file path and format.")
+def main(train_path, test_path):
+    """
+    Train the rectification model on (train_path) and evaluate on (test_path).
+    Both files must be pre-split externally (e.g. via gene-disjoint GroupKFold);
+    no random splitting is performed inside this script.
+
+    Parameters
+    ----------
+    train_path : str
+        Path to the training TSV file (e.g. one fold's training portion).
+    test_path : str
+        Path to the held-out test TSV file (e.g. the same fold's test portion).
+    """
+    # 加载训练数据
+    print(f"=== Loading training data ===")
+    df_train = load_data(train_path)
+
+    # 检查训练数据是否成功加载
+    if df_train is None:
+        print("Error: Failed to load training data. Please check the file path and format.")
         return
-    
-    if df.empty:
-        print("Error: Input file is empty or all rows have zero offsets.")
+    if df_train.empty:
+        print("Error: Training file is empty or all rows have zero offsets.")
         return
-    
+
+    # 加载测试数据
+    print(f"=== Loading test data ===")
+    df_test = load_data(test_path)
+    if df_test is None:
+        print("Error: Failed to load test data. Please check the file path and format.")
+        return
+    if df_test.empty:
+        print("Error: Test file is empty or all rows have zero offsets.")
+        return
+
     # 预处理
     max_newaa_len = 400
     total_seq_len = 50 + 1 + max_newaa_len + 1 + 50  # 502
-    
+
     try:
-        X, y = prepare_data(df, max_newaa_len)
+        X_train, y_train = prepare_data(df_train, max_newaa_len)
+        X_test,  y_test  = prepare_data(df_test,  max_newaa_len)
     except Exception as e:
         print(f"Error in data preparation: {e}")
         return
-    
-    # 分割训练和测试集
-    print("Splitting data into train and test sets...")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
     print(f"Train set: {X_train.shape[0]} samples, Test set: {X_test.shape[0]} samples")
+    print("(Train / test split is taken from input files; no in-script random split is performed.)")
     
     # 标准化输出
     print("Standardizing output...")
@@ -459,8 +479,16 @@ def main(file_path="humancomparison.tsv"):
     print("Final model saved as splice_diff_cnn_attention.pt")
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1:
-        main(sys.argv[1])
-    else:
-        main()
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Train the splice-site rectification CNN on a pre-split "
+                    "training set and evaluate on a pre-split test set. "
+                    "No in-script random splitting is performed; the user "
+                    "must supply train/test files prepared by an external "
+                    "gene-disjoint splitter (e.g. scripts/unique_gene_disjoint.py).")
+    parser.add_argument("--train", required=True,
+                        help="Path to the training TSV file (one fold's training portion).")
+    parser.add_argument("--test",  required=True,
+                        help="Path to the test TSV file (the corresponding held-out fold).")
+    args = parser.parse_args()
+    main(args.train, args.test)
