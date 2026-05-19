@@ -13,7 +13,6 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.transforms import Compose
 from tqdm import tqdm
 from sklearn.metrics import f1_score, confusion_matrix, classification_report, precision_score
-from sklearn.model_selection import train_test_split
 
 # Configure environment and threads
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -473,31 +472,75 @@ def analyze_class_features(dataset, class_idx):
     }
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Train the AS-type classification GNN on a pre-split "
+                    "training set and evaluate on a pre-split test set. "
+                    "No in-script random splitting between train and test is "
+                    "performed; both files must be prepared externally by a "
+                    "gene-disjoint splitter (e.g. scripts/unique_gene_disjoint.py). "
+                    "The test set is used both for early-stopping monitoring "
+                    "during training and for final evaluation.")
+    parser.add_argument("--train", required=True,
+                        help="Path to the training .pt file (one fold's training "
+                             "portion, gene-disjoint from the test file).")
+    parser.add_argument("--test", required=True,
+                        help="Path to the test .pt file (the corresponding "
+                             "held-out fold; used for both early-stopping "
+                             "monitoring and final evaluation).")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed for model initialization "
+                             "(default: 42).")
+    args = parser.parse_args()
+
+    # Re-seed with the chosen seed (overriding the module-level default).
+    set_seed(args.seed)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
     # Use SelectiveNormalizeFeatures to preserve PE
     transform = Compose([SelectiveNormalizeFeatures(pe_dim=8)])
 
-    print("Loading dataset...")
+    # ----------------------------------------------------------------------
+    # Load train and test datasets from the user-supplied paths.
+    # No random train/test split is performed in this script; the split must
+    # be produced externally (e.g. via gene-disjoint GroupKFold). See the
+    # response to Reviewer 3, Comment 6.
+    # ----------------------------------------------------------------------
+    print(f"Loading training dataset from {args.train} ...")
     try:
-        dataset = torch.load('optimized_dataset.pt')
-        if not isinstance(dataset, list) or not dataset:
-            raise ValueError("Dataset optimized_dataset.pt is empty or invalid")
-        print(f"Dataset size: {len(dataset)}")
+        train_full = torch.load(args.train)
+        if not isinstance(train_full, list) or not train_full:
+            raise ValueError(f"Training file {args.train} is empty or not a list")
+        print(f"  Training file size: {len(train_full)}")
     except Exception as e:
-        print(f"Error loading dataset: {e}")
+        print(f"Error loading training file: {e}")
         exit(1)
 
-    print("Validating and fixing dataset...")
-    dataset = validate_and_fix_dataset(dataset)
-
-    if dataset is None or not isinstance(dataset, list):
-        print("Error: validate_and_fix_dataset returned None or invalid dataset")
+    print(f"Loading test dataset from {args.test} ...")
+    try:
+        test_data = torch.load(args.test)
+        if not isinstance(test_data, list) or not test_data:
+            raise ValueError(f"Test file {args.test} is empty or not a list")
+        print(f"  Test file size: {len(test_data)}")
+    except Exception as e:
+        print(f"Error loading test file: {e}")
         exit(1)
 
-    # 检查图级特征维度
-    sample_graph = dataset[0]
+    print("Validating and fixing training/test datasets...")
+    train_full = validate_and_fix_dataset(train_full)
+    test_data  = validate_and_fix_dataset(test_data)
+
+    if train_full is None or not isinstance(train_full, list):
+        print("Error: validate_and_fix_dataset returned None or invalid training dataset")
+        exit(1)
+    if test_data is None or not isinstance(test_data, list):
+        print("Error: validate_and_fix_dataset returned None or invalid test dataset")
+        exit(1)
+
+    # 检查图级特征维度 (taken from the training set)
+    sample_graph = train_full[0]
     if hasattr(sample_graph, 'graph_features'):
         if sample_graph.graph_features.dim() == 1:
             num_graph_features = sample_graph.graph_features.size(0)
@@ -508,19 +551,17 @@ if __name__ == "__main__":
         num_graph_features = 0
         print("No graph features found in dataset")
 
-    print("Splitting dataset...")
-    train_val_data, test_data = train_test_split(
-        dataset,
-        test_size=0.2,
-        random_state=42,
-        stratify=[g.y.item() for g in dataset if hasattr(g, 'y') and g.y is not None]
-    )
-    train_data, val_data = train_test_split(
-        train_val_data,
-        test_size=0.25,  # 0.25 of 0.8 = 0.2 of total
-        random_state=42,
-        stratify=[g.y.item() for g in train_val_data if hasattr(g, 'y') and g.y is not None]
-    )
+    # ----------------------------------------------------------------------
+    # Use the entire training file for training, and use the test file both
+    # as the validation set for early-stopping monitoring during training and
+    # as the held-out test set for final evaluation. Both files are
+    # gene-disjoint by construction (see Methods, response to Reviewer 3
+    # Comment 6). No in-script random split is performed.
+    # ----------------------------------------------------------------------
+    train_data = train_full
+    val_data = test_data   # test used for early-stopping monitoring
+    print(f"  Train: {len(train_data)}, Test (used as val + final test): "
+          f"{len(test_data)}")
 
     print("Analyzing class distribution...")
     train_labels_all = [g.y.item() for g in train_data if hasattr(g, 'y') and g.y is not None]
